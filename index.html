@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <input type="text" />
+
+  <script>
+    const input = document.querySelector('input');
+
+    const DOT = '.';
+    const COMMA = ',';
+    const ALLOWED_CHARACTERS = /[,\.\d]/;
+    const ALLOWED_KEYS = ['Backspace'];
+
+    const isDotLimitReached = (value, key) => (key === DOT || key === COMMA) && value.includes(DOT);
+    const isDecimalLimitReached = value => value.split('.')?.[1]?.length >= 2;
+    const replaceCommaWithDot = value => value.replace(COMMA, DOT);
+
+    input.addEventListener('keydown', event => {
+      const { key, target: { value } } = event;
+
+      if (!ALLOWED_CHARACTERS.test(key)) {
+        if (!ALLOWED_KEYS.includes(key)) {
+          event.preventDefault();
+        }
+      } else {
+        if (isDotLimitReached(value, key) || isDecimalLimitReached(value)) {
+          event.preventDefault();
+        }
+      }
+    });
+
+    input.addEventListener('keyup', event => {
+      const { target: { value } } = event;
+
+      if (value.includes(',')) {
+        input.value = replaceCommaWithDot(value);
+      }
+    });
+  </script>
+</body>
+
+</html>
