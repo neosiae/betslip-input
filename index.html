@@ -17,11 +17,18 @@
     const DOT = '.';
     const COMMA = ',';
     const ALLOWED_CHARACTERS = /[,\.\d]/;
-    const ALLOWED_KEYS = ['Backspace'];
+    const ALLOWED_KEYS = ['Backspace', 'ArrowLeft', 'ArrowRight'];
 
     const isDotLimitReached = (value, key) => (key === DOT || key === COMMA) && value.includes(DOT);
     const isDecimalLimitReached = value => value.split('.')?.[1]?.length >= 2;
     const replaceCommaWithDot = value => value.replace(COMMA, DOT);
+    const checkIsCursorBeforeDecimalPoint = (cursorPosition, value) => cursorPosition <= value.indexOf(DOT);
+    const trimDecimalsOverLimit = (value) => {
+      const [before, after] = value.split('.');
+      return `${before}.${after.slice(0, 2)}`;
+    }
+
+    let isCursorBeforeDecimalPoint = false;
 
     input.addEventListener('keydown', event => {
       const { key, target: { value } } = event;
@@ -31,18 +38,27 @@
           event.preventDefault();
         }
       } else {
-        if (isDotLimitReached(value, key) || isDecimalLimitReached(value)) {
+        if (isDotLimitReached(value, key) || (isDecimalLimitReached(value) && !isCursorBeforeDecimalPoint)) {
           event.preventDefault();
         }
       }
     });
 
     input.addEventListener('keyup', event => {
-      const { target: { value } } = event;
+      let { target: { value } } = event;
 
       if (value.includes(',')) {
-        input.value = replaceCommaWithDot(value);
+        value = replaceCommaWithDot(value);
+        input.value = value;
       }
+
+      if (value.includes(DOT)) {
+        if (isDecimalLimitReached(value)) {
+          input.value = trimDecimalsOverLimit(value);
+        }
+      }
+
+      isCursorBeforeDecimalPoint = checkIsCursorBeforeDecimalPoint(event.target.selectionStart, value);
     });
   </script>
 </body>
