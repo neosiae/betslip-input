@@ -23,12 +23,17 @@
     const isDecimalLimitReached = value => value.split('.')?.[1]?.length >= 2;
     const replaceCommaWithDot = value => value.replace(COMMA, DOT);
     const checkIsCursorBeforeDecimalPoint = (cursorPosition, value) => cursorPosition <= value.indexOf(DOT);
+    const checkIsCursorBeforeFirstChar = cursorPosition => cursorPosition === 0;
     const trimDecimalsOverLimit = (value) => {
       const [before, after] = value.split('.');
       return `${before}.${after.slice(0, 2)}`;
     }
+    const isFirstCharZero = value => value.startsWith('0');
+    const isSecondCharDot = (value) => value[1] === DOT;
+    const valueIncludesDot = (value) => value.includes(DOT);
 
     let isCursorBeforeDecimalPoint = false;
+    let isCursorBeforeFirstChar = false;
 
     input.addEventListener('keydown', event => {
       const { key, target: { value } } = event;
@@ -38,7 +43,19 @@
           event.preventDefault();
         }
       } else {
-        if (isDotLimitReached(value, key) || (isDecimalLimitReached(value) && !isCursorBeforeDecimalPoint)) {
+        if (isDotLimitReached(value, key)) {
+          event.preventDefault();
+        }
+
+        if (isDecimalLimitReached(value) && !isCursorBeforeDecimalPoint) {
+          event.preventDefault();
+        }
+
+        if (isFirstCharZero(value) && key !== DOT && !valueIncludesDot(value)) {
+          event.preventDefault();
+        }
+
+        if (isFirstCharZero(value) && isCursorBeforeDecimalPoint && !isCursorBeforeFirstChar) {
           event.preventDefault();
         }
       }
@@ -52,14 +69,23 @@
         input.value = value;
       }
 
-      if (value.includes(DOT)) {
+      if (valueIncludesDot(value)) {
         if (isDecimalLimitReached(value)) {
           input.value = trimDecimalsOverLimit(value);
         }
       }
 
       isCursorBeforeDecimalPoint = checkIsCursorBeforeDecimalPoint(event.target.selectionStart, value);
+      isCursorBeforeFirstChar = checkIsCursorBeforeFirstChar(event.target.selectionStart);
     });
+
+    input.addEventListener('paste', (event) => {
+      event.preventDefault();
+    });
+
+    input.addEventListener('focus', (event) => {
+      event.target.select();
+    })
   </script>
 </body>
 
