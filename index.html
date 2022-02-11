@@ -16,6 +16,7 @@
 
     const DOT = '.';
     const COMMA = ',';
+    const ZERO = '0';
     const ALLOWED_CHARACTERS = /[,\.\d]/;
     const ALLOWED_KEYS = ['Backspace', 'ArrowLeft', 'ArrowRight'];
 
@@ -23,14 +24,19 @@
     const isDecimalLimitReached = value => value.split('.')?.[1]?.length >= 2;
     const replaceCommaWithDot = value => value.replace(COMMA, DOT);
     const checkIsCursorBeforeDecimalPoint = (cursorPosition, value) => cursorPosition <= value.indexOf(DOT);
-    const checkIsCursorBeforeFirstChar = cursorPosition => cursorPosition === 0;
+    const checkIsCursorBeforeFirstChar = (cursorPosition, value) => cursorPosition === value.indexOf(value[0]);
     const trimDecimalsOverLimit = (value) => {
       const [before, after] = value.split('.');
       return `${before}.${after.slice(0, 2)}`;
     }
-    const isFirstCharZero = value => value.startsWith('0');
+    const isFirstCharZero = value => value.startsWith(ZERO);
     const isSecondCharDot = (value) => value[1] === DOT;
     const valueIncludesDot = (value) => value.includes(DOT);
+    const valueIncludesComma = (value) => value.includes(COMMA);
+    const isKeyDifferentFromDotAndComma = key => key !== DOT && key !== COMMA;
+    const isFirstCharDot = (value) => value[0] === DOT;
+    const removeCommas = value => value.replaceAll(COMMA, '');
+    const isKeyZero = key => key === ZERO;
 
     let isCursorBeforeDecimalPoint = false;
     let isCursorBeforeFirstChar = false;
@@ -51,11 +57,15 @@
           event.preventDefault();
         }
 
-        if (isFirstCharZero(value) && key !== DOT && !valueIncludesDot(value)) {
+        if (isFirstCharZero(value) && isKeyDifferentFromDotAndComma(key) && !valueIncludesDot(value)) {
           event.preventDefault();
         }
 
         if (isFirstCharZero(value) && isCursorBeforeDecimalPoint && !isCursorBeforeFirstChar) {
+          event.preventDefault();
+        }
+
+        if (isKeyZero(key) && isCursorBeforeFirstChar && !isFirstCharDot(value)) {
           event.preventDefault();
         }
       }
@@ -64,7 +74,7 @@
     input.addEventListener('keyup', event => {
       let { target: { value } } = event;
 
-      if (value.includes(',')) {
+      if (valueIncludesComma(value)) {
         value = replaceCommaWithDot(value);
         input.value = value;
       }
@@ -72,11 +82,15 @@
       if (valueIncludesDot(value)) {
         if (isDecimalLimitReached(value)) {
           input.value = trimDecimalsOverLimit(value);
+
+          if (valueIncludesComma(value)) {
+            input.value = removeCommas(value);
+          }
         }
       }
 
       isCursorBeforeDecimalPoint = checkIsCursorBeforeDecimalPoint(event.target.selectionStart, value);
-      isCursorBeforeFirstChar = checkIsCursorBeforeFirstChar(event.target.selectionStart);
+      isCursorBeforeFirstChar = checkIsCursorBeforeFirstChar(event.target.selectionStart, value);
     });
 
     input.addEventListener('paste', (event) => {
